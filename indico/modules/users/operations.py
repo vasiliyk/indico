@@ -13,7 +13,8 @@ from indico.core.config import config
 from indico.core.db import db
 from indico.modules.logs.models.entries import LogKind, UserLogRealm
 from indico.modules.users import User, logger, signals
-from indico.modules.users.util import anonymize_user
+from indico.modules.users.models.emails import UserEmail
+from indico.modules.users.util import anonymize_user, merge_users
 
 
 def create_user(email, data, identity=None, settings=None, other_emails=None, from_moderation=True):
@@ -86,11 +87,6 @@ def add_secondary_email(user, email, actor, merge_pending=True):
     :param actor: The `User` performing the action (for logging).
     :param merge_pending: Whether to merge a pending user with the same email (default: True).
     """
-    from indico.modules.users.models.emails import UserEmail
-    from indico.modules.users.util import merge_users
-    from indico.modules.users import signals, logger
-    from indico.modules.logs.models.entries import UserLogRealm, LogKind
-
     existing = UserEmail.query.filter_by(is_user_deleted=False, email=email).first()
     if merge_pending and existing and existing.user.is_pending:
         logger.info('Found pending user %s to be merged into %s', existing.user, user)
